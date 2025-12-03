@@ -12,15 +12,49 @@ class FleetManagementPage extends StatefulWidget {
   State<FleetManagementPage> createState() => _FleetManagementPageState();
 }
 
-class _FleetManagementPageState extends State<FleetManagementPage> with SingleTickerProviderStateMixin {
+class _FleetManagementPageState extends State<FleetManagementPage>
+    with SingleTickerProviderStateMixin {
+  static final Uri _vehicleGraphQlEndpoint = Uri.parse(
+    'https://example.com/graphql', // Replace with your backend GraphQL endpoint.
+  );
   late TabController _tabController;
-  late final List<Vehicle> _vehicles;
+  late List<Vehicle> _vehicles;
+  bool _loadingVehicles = false;
+  String? _vehicleLoadError;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _vehicles = mockVehicles();
+    _refreshVehicles();
+  }
+
+  Future<void> _refreshVehicles() async {
+    setState(() {
+      _loadingVehicles = true;
+      _vehicleLoadError = null;
+    });
+
+    try {
+      final fetched = await fetchVehiclesFromServer(
+        endpoint: _vehicleGraphQlEndpoint,
+      );
+      if (!mounted) return;
+      setState(() {
+        _vehicles = fetched;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _vehicleLoadError = error.toString();
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _loadingVehicles = false;
+      });
+    }
   }
 
   @override
@@ -49,7 +83,12 @@ class _FleetManagementPageState extends State<FleetManagementPage> with SingleTi
             child: TabBarView(
               controller: _tabController,
               children: [
-                _VehiclesTab(vehicles: _vehicles),
+                _VehiclesTab(
+                  vehicles: _vehicles,
+                  isLoading: _loadingVehicles,
+                  errorMessage: _vehicleLoadError,
+                  onRefresh: _refreshVehicles,
+                ),
                 _DriversTab(vehicles: _vehicles),
               ],
             ),
@@ -62,9 +101,17 @@ class _FleetManagementPageState extends State<FleetManagementPage> with SingleTi
 
 // Vehicles Tab
 class _VehiclesTab extends StatefulWidget {
-  const _VehiclesTab({required this.vehicles});
+  const _VehiclesTab({
+    required this.vehicles,
+    required this.isLoading,
+    required this.onRefresh,
+    this.errorMessage,
+  });
 
   final List<Vehicle> vehicles;
+  final bool isLoading;
+  final String? errorMessage;
+  final Future<void> Function()? onRefresh;
 
   @override
   State<_VehiclesTab> createState() => _VehiclesTabState();
@@ -73,7 +120,9 @@ class _VehiclesTab extends StatefulWidget {
 class _VehiclesTabState extends State<_VehiclesTab> {
   Future<void> _showVehicleDetailsSheet(Vehicle vehicle) {
     final driverController = TextEditingController(text: vehicle.driver);
-    final noteController = TextEditingController(text: vehicle.note.isEmpty ? '' : vehicle.note);
+    final noteController = TextEditingController(
+      text: vehicle.note.isEmpty ? '' : vehicle.note,
+    );
     bool isEditing = false;
 
     return showModalBottomSheet(
@@ -110,9 +159,10 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                             children: [
                               Text(
                                 vehicle.id,
-                                style: Theme.of(sheetContext).textTheme.headlineSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                style: Theme.of(sheetContext)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -131,9 +181,14 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                     ),
                     const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: _statusColor(vehicle.status).withValues(alpha: 0.12),
+                        color: _statusColor(
+                          vehicle.status,
+                        ).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -141,7 +196,9 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                         children: [
                           const Icon(Icons.ev_station, size: 16),
                           const SizedBox(width: 6),
-                          Text('${vehicle.fuelEfficiency.toStringAsFixed(1)} km/l'),
+                          Text(
+                            '${vehicle.fuelEfficiency.toStringAsFixed(1)} km/l',
+                          ),
                         ],
                       ),
                     ),
@@ -177,7 +234,9 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: toggleEdit,
-                            icon: Icon(isEditing ? Icons.check : Icons.edit_outlined),
+                            icon: Icon(
+                              isEditing ? Icons.check : Icons.edit_outlined,
+                            ),
                             label: Text(isEditing ? 'Save' : 'Edit'),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -269,9 +328,15 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'moving', child: Text('Moving')),
+                        DropdownMenuItem(
+                          value: 'moving',
+                          child: Text('Moving'),
+                        ),
                         DropdownMenuItem(value: 'idle', child: Text('Idle')),
-                        DropdownMenuItem(value: 'stopped', child: Text('Stopped')),
+                        DropdownMenuItem(
+                          value: 'stopped',
+                          child: Text('Stopped'),
+                        ),
                       ],
                       onChanged: (value) {
                         if (value != null) {
@@ -291,11 +356,14 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (vehicleIdController.text.isNotEmpty && driverController.text.isNotEmpty) {
+                    if (vehicleIdController.text.isNotEmpty &&
+                        driverController.text.isNotEmpty) {
                       // TODO: Add vehicle to database/state management
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Vehicle ${vehicleIdController.text} added successfully!'),
+                          content: Text(
+                            'Vehicle ${vehicleIdController.text} added successfully!',
+                          ),
                           backgroundColor: const Color(0xFF4CAF50),
                         ),
                       );
@@ -315,9 +383,11 @@ class _VehiclesTabState extends State<_VehiclesTab> {
   @override
   Widget build(BuildContext context) {
     final vehicles = widget.vehicles;
+    final errorMessage = widget.errorMessage;
 
     return Column(
       children: [
+        if (widget.isLoading) const LinearProgressIndicator(minHeight: 2),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -325,9 +395,9 @@ class _VehiclesTabState extends State<_VehiclesTab> {
               Expanded(
                 child: Text(
                   '${vehicles.length} Vehicles',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               FilledButton.icon(
@@ -338,112 +408,152 @@ class _VehiclesTabState extends State<_VehiclesTab> {
             ],
           ),
         ),
+        if (errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Material(
+              borderRadius: BorderRadius.circular(12),
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: ListTile(
+                leading: const Icon(Icons.warning_amber_rounded),
+                title: const Text('Unable to refresh vehicles'),
+                subtitle: Text(
+                  errorMessage,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: TextButton(
+                  onPressed: widget.onRefresh == null
+                      ? null
+                      : () {
+                          widget.onRefresh!.call();
+                        },
+                  child: const Text('Retry'),
+                ),
+              ),
+            ),
+          ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: vehicles.length,
-            itemBuilder: (context, index) {
-              final vehicle = vehicles[index];
-              final isActive = vehicle.status == 'moving';
+          child: RefreshIndicator(
+            onRefresh: widget.onRefresh ?? () async {},
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: vehicles.length,
+              itemBuilder: (context, index) {
+                final vehicle = vehicles[index];
+                final isActive = vehicle.status == 'moving';
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  onTap: () => _showVehicleDetailsSheet(vehicle),
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? const Color(0xFF4CAF50).withValues(alpha: 0.1)
-                          : vehicle.status == 'idle'
-                              ? const Color(0xFFFF9800).withValues(alpha: 0.1)
-                              : const Color(0xFFF44336).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.directions_car,
-                      size: 32,
-                      color: isActive
-                          ? const Color(0xFF4CAF50)
-                          : vehicle.status == 'idle'
-                              ? const Color(0xFFFF9800)
-                              : const Color(0xFFF44336),
-                    ),
-                  ),
-                  title: Text(
-                    vehicle.id,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.person, size: 14, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(vehicle.driver),
-                        ],
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    onTap: () => _showVehicleDetailsSheet(vehicle),
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? const Color(0xFF4CAF50).withValues(alpha: 0.1)
+                            : vehicle.status == 'idle'
+                            ? const Color(0xFFFF9800).withValues(alpha: 0.1)
+                            : const Color(0xFFF44336).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.speed, size: 14, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text('${vehicle.speedKph.toStringAsFixed(0)} km/h'),
-                        ],
+                      child: Icon(
+                        Icons.directions_car,
+                        size: 32,
+                        color: isActive
+                            ? const Color(0xFF4CAF50)
+                            : vehicle.status == 'idle'
+                            ? const Color(0xFFFF9800)
+                            : const Color(0xFFF44336),
                       ),
-                    ],
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? const Color(0xFF4CAF50).withValues(alpha: 0.1)
-                          : vehicle.status == 'idle'
-                              ? const Color(0xFFFF9800).withValues(alpha: 0.1)
-                              : const Color(0xFFF44336).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    title: Text(
+                      vehicle.id,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? const Color(0xFF4CAF50)
-                                : vehicle.status == 'idle'
-                                    ? const Color(0xFFFF9800)
-                                    : const Color(0xFFF44336),
-                            shape: BoxShape.circle,
-                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.person,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(vehicle.driver),
+                          ],
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          vehicle.status.toUpperCase(),
-                          style: TextStyle(
-                            color: isActive
-                                ? const Color(0xFF4CAF50)
-                                : vehicle.status == 'idle'
-                                    ? const Color(0xFFFF9800)
-                                    : const Color(0xFFF44336),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.speed,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text('${vehicle.speedKph.toStringAsFixed(0)} km/h'),
+                          ],
                         ),
                       ],
                     ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? const Color(0xFF4CAF50).withValues(alpha: 0.1)
+                            : vehicle.status == 'idle'
+                            ? const Color(0xFFFF9800).withValues(alpha: 0.1)
+                            : const Color(0xFFF44336).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? const Color(0xFF4CAF50)
+                                  : vehicle.status == 'idle'
+                                  ? const Color(0xFFFF9800)
+                                  : const Color(0xFFF44336),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            vehicle.status.toUpperCase(),
+                            style: TextStyle(
+                              color: isActive
+                                  ? const Color(0xFF4CAF50)
+                                  : vehicle.status == 'idle'
+                                  ? const Color(0xFFFF9800)
+                                  : const Color(0xFFF44336),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -488,7 +598,11 @@ class _DriversTabState extends State<_DriversTab> {
     _driverNames = map.keys.toList()..sort();
   }
 
-  Future<void> _showDriverDetailsSheet(String driverName, List<Vehicle> driverVehicles, int activeVehicles) {
+  Future<void> _showDriverDetailsSheet(
+    String driverName,
+    List<Vehicle> driverVehicles,
+    int activeVehicles,
+  ) {
     final isActive = activeVehicles > 0;
     return showModalBottomSheet(
       context: context,
@@ -500,7 +614,9 @@ class _DriversTabState extends State<_DriversTab> {
         final assignedTileColor = scheme.surfaceContainerHighest.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.55 : 0.9,
         );
-        final assignedSubtitleColor = scheme.onSurfaceVariant.withValues(alpha: 0.8);
+        final assignedSubtitleColor = scheme.onSurfaceVariant.withValues(
+          alpha: 0.8,
+        );
         return _FleetDetailCard(
           onClose: () => Navigator.of(sheetContext).pop(),
           child: SingleChildScrollView(
@@ -511,7 +627,9 @@ class _DriversTabState extends State<_DriversTab> {
                   children: [
                     CircleAvatar(
                       radius: 34,
-                      backgroundColor: const Color(0xFF2196F3).withValues(alpha: 0.1),
+                      backgroundColor: const Color(
+                        0xFF2196F3,
+                      ).withValues(alpha: 0.1),
                       child: Text(
                         driverName.substring(0, 1).toUpperCase(),
                         style: const TextStyle(
@@ -528,19 +646,28 @@ class _DriversTabState extends State<_DriversTab> {
                         children: [
                           Text(
                             driverName,
-                            style: Theme.of(sheetContext).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(sheetContext)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(Icons.circle, size: 10, color: isActive ? const Color(0xFF4CAF50) : Colors.grey),
+                              Icon(
+                                Icons.circle,
+                                size: 10,
+                                color: isActive
+                                    ? const Color(0xFF4CAF50)
+                                    : Colors.grey,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 isActive ? 'Active' : 'Inactive',
                                 style: TextStyle(
-                                  color: isActive ? const Color(0xFF4CAF50) : Colors.grey,
+                                  color: isActive
+                                      ? const Color(0xFF4CAF50)
+                                      : Colors.grey,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -550,7 +677,10 @@ class _DriversTabState extends State<_DriversTab> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
@@ -566,20 +696,36 @@ class _DriversTabState extends State<_DriversTab> {
                     height: 200,
                     child: _FleetMapView(
                       vehicles: driverVehicles,
-                      focusVehicleId: driverVehicles.isNotEmpty ? driverVehicles.first.id : null,
+                      focusVehicleId: driverVehicles.isNotEmpty
+                          ? driverVehicles.first.id
+                          : null,
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                _buildFleetDetailField(sheetContext, 'Phone', '+1 234 567 8900'),
+                _buildFleetDetailField(
+                  sheetContext,
+                  'Phone',
+                  '+1 234 567 8900',
+                ),
                 const SizedBox(height: 12),
-                _buildFleetDetailField(sheetContext, 'License', 'DL-${driverName.substring(0, 3).toUpperCase()}123'),
+                _buildFleetDetailField(
+                  sheetContext,
+                  'License',
+                  'DL-${driverName.substring(0, 3).toUpperCase()}123',
+                ),
                 const SizedBox(height: 12),
-                _buildFleetDetailField(sheetContext, 'Active Trips', isActive ? '$activeVehicles ongoing' : 'None'),
+                _buildFleetDetailField(
+                  sheetContext,
+                  'Active Trips',
+                  isActive ? '$activeVehicles ongoing' : 'None',
+                ),
                 const SizedBox(height: 20),
                 Text(
                   'Assigned Vehicles',
-                  style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ...driverVehicles.map(
@@ -597,8 +743,8 @@ class _DriversTabState extends State<_DriversTab> {
                           color: vehicle.status == 'moving'
                               ? const Color(0xFF4CAF50)
                               : vehicle.status == 'idle'
-                                  ? const Color(0xFFFF9800)
-                                  : const Color(0xFFF44336),
+                              ? const Color(0xFFFF9800)
+                              : const Color(0xFFF44336),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -607,7 +753,9 @@ class _DriversTabState extends State<_DriversTab> {
                             children: [
                               Text(
                                 vehicle.id,
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               Text(
                                 '${vehicle.speedKph.toStringAsFixed(0)} km/h',
@@ -620,14 +768,18 @@ class _DriversTabState extends State<_DriversTab> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: (vehicle.status == 'moving'
-                                    ? const Color(0xFF4CAF50)
-                                    : vehicle.status == 'idle'
+                            color:
+                                (vehicle.status == 'moving'
+                                        ? const Color(0xFF4CAF50)
+                                        : vehicle.status == 'idle'
                                         ? const Color(0xFFFF9800)
                                         : const Color(0xFFF44336))
-                                .withValues(alpha: 0.12),
+                                    .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -638,8 +790,8 @@ class _DriversTabState extends State<_DriversTab> {
                               color: vehicle.status == 'moving'
                                   ? const Color(0xFF4CAF50)
                                   : vehicle.status == 'idle'
-                                      ? const Color(0xFFFF9800)
-                                      : const Color(0xFFF44336),
+                                  ? const Color(0xFFFF9800)
+                                  : const Color(0xFFF44336),
                             ),
                           ),
                         ),
@@ -652,7 +804,8 @@ class _DriversTabState extends State<_DriversTab> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _showDriverEditDialog(sheetContext, driverName),
+                        onPressed: () =>
+                            _showDriverEditDialog(sheetContext, driverName),
                         icon: const Icon(Icons.edit_outlined),
                         label: const Text('Edit'),
                         style: OutlinedButton.styleFrom(
@@ -682,10 +835,15 @@ class _DriversTabState extends State<_DriversTab> {
     );
   }
 
-  Future<void> _showDriverEditDialog(BuildContext baseContext, String driverName) {
+  Future<void> _showDriverEditDialog(
+    BuildContext baseContext,
+    String driverName,
+  ) {
     final nameController = TextEditingController(text: driverName);
     final phoneController = TextEditingController(text: '+1 234 567 8900');
-    final licenseController = TextEditingController(text: 'DL-${driverName.substring(0, 3).toUpperCase()}123');
+    final licenseController = TextEditingController(
+      text: 'DL-${driverName.substring(0, 3).toUpperCase()}123',
+    );
 
     return showDialog(
       context: baseContext,
@@ -816,7 +974,9 @@ class _DriversTabState extends State<_DriversTab> {
                   // TODO: Add driver to database/state management
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Driver ${nameController.text} added successfully!'),
+                      content: Text(
+                        'Driver ${nameController.text} added successfully!',
+                      ),
                       backgroundColor: const Color(0xFF4CAF50),
                     ),
                   );
@@ -843,9 +1003,9 @@ class _DriversTabState extends State<_DriversTab> {
               Expanded(
                 child: Text(
                   '${drivers.length} Drivers',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               FilledButton.icon(
@@ -862,17 +1022,26 @@ class _DriversTabState extends State<_DriversTab> {
             itemCount: drivers.length,
             itemBuilder: (context, index) {
               final driverName = drivers[index];
-              final List<Vehicle> driverVehicles = _vehiclesByDriver[driverName] ?? const <Vehicle>[];
-              final activeVehicles = driverVehicles.where((v) => v.status == 'moving').length;
-              
+              final List<Vehicle> driverVehicles =
+                  _vehiclesByDriver[driverName] ?? const <Vehicle>[];
+              final activeVehicles = driverVehicles
+                  .where((v) => v.status == 'moving')
+                  .length;
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
-                  onTap: () => _showDriverDetailsSheet(driverName, driverVehicles, activeVehicles),
+                  onTap: () => _showDriverDetailsSheet(
+                    driverName,
+                    driverVehicles,
+                    activeVehicles,
+                  ),
                   contentPadding: const EdgeInsets.all(16),
                   leading: CircleAvatar(
                     radius: 28,
-                    backgroundColor: const Color(0xFF2196F3).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF2196F3,
+                    ).withValues(alpha: 0.1),
                     child: Text(
                       driverName.substring(0, 1).toUpperCase(),
                       style: const TextStyle(
@@ -895,7 +1064,11 @@ class _DriversTabState extends State<_DriversTab> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.directions_car, size: 14, color: Colors.grey),
+                          const Icon(
+                            Icons.directions_car,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 4),
                           Text('${driverVehicles.length} vehicle(s)'),
                         ],
@@ -906,13 +1079,17 @@ class _DriversTabState extends State<_DriversTab> {
                           Icon(
                             Icons.circle,
                             size: 10,
-                            color: activeVehicles > 0 ? const Color(0xFF4CAF50) : Colors.grey,
+                            color: activeVehicles > 0
+                                ? const Color(0xFF4CAF50)
+                                : Colors.grey,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             activeVehicles > 0 ? 'Active' : 'Inactive',
                             style: TextStyle(
-                              color: activeVehicles > 0 ? const Color(0xFF4CAF50) : Colors.grey,
+                              color: activeVehicles > 0
+                                  ? const Color(0xFF4CAF50)
+                                  : Colors.grey,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -978,18 +1155,16 @@ class _FleetMapView extends StatelessWidget {
 
     final flags = interactive
         ? InteractiveFlag.drag |
-            InteractiveFlag.pinchZoom |
-            InteractiveFlag.doubleTapZoom |
-            InteractiveFlag.flingAnimation
+              InteractiveFlag.pinchZoom |
+              InteractiveFlag.doubleTapZoom |
+              InteractiveFlag.flingAnimation
         : InteractiveFlag.none;
 
     return FlutterMap(
       options: MapOptions(
         initialCenter: center,
         initialZoom: 13,
-        interactionOptions: InteractionOptions(
-          flags: flags,
-        ),
+        interactionOptions: InteractionOptions(flags: flags),
       ),
       children: [
         TileLayer(
@@ -1071,7 +1246,9 @@ class _EditableFleetField extends StatelessWidget {
           readOnly: readOnly,
           minLines: minLines,
           maxLines: maxLines,
-          keyboardType: maxLines > 1 ? TextInputType.multiline : TextInputType.text,
+          keyboardType: maxLines > 1
+              ? TextInputType.multiline
+              : TextInputType.text,
           decoration: InputDecoration(
             filled: true,
             fillColor: readOnly
@@ -1082,7 +1259,10 @@ class _EditableFleetField extends StatelessWidget {
             focusedBorder: border.copyWith(
               borderSide: BorderSide(color: scheme.primary),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
@@ -1152,7 +1332,11 @@ class _FleetDetailCard extends StatelessWidget {
   }
 }
 
-Widget _buildFleetDetailField(BuildContext context, String label, String value) {
+Widget _buildFleetDetailField(
+  BuildContext context,
+  String label,
+  String value,
+) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
   final border = OutlineInputBorder(
@@ -1178,14 +1362,18 @@ Widget _buildFleetDetailField(BuildContext context, String label, String value) 
           border: border,
           enabledBorder: border,
           focusedBorder: border,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
         child: Text(
           value,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     ],
   );
 }
-
