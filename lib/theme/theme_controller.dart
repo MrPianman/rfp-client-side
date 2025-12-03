@@ -9,6 +9,7 @@ class ThemeController {
   final ValueNotifier<int> dashboardChartLimit = ValueNotifier(7);
   final ValueNotifier<int> chartTripsTarget = ValueNotifier(10);
   final ValueNotifier<int> chartProfitTarget = ValueNotifier(500);
+  final ValueNotifier<int> normalTripSuccessPercent = ValueNotifier(60);
 
   void setMode(ThemeMode newMode) {
     if (mode.value != newMode) mode.value = newMode;
@@ -33,6 +34,13 @@ class ThemeController {
   void setChartProfitTarget(int value) {
     if (chartProfitTarget.value != value) {
       chartProfitTarget.value = value;
+    }
+  }
+
+  void setNormalTripSuccessPercent(int value) {
+    final clamped = value.clamp(10, 100);
+    if (normalTripSuccessPercent.value != clamped) {
+      normalTripSuccessPercent.value = clamped;
     }
   }
 }

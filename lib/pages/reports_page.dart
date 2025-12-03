@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../models/trip.dart';
 
-class ReportsPage extends StatelessWidget {
+class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
+
+  @override
+  State<ReportsPage> createState() => _ReportsPageState();
+}
+
+class _ReportsPageState extends State<ReportsPage> {
+  int _selectedSectionIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -34,56 +41,67 @@ class ReportsPage extends StatelessWidget {
     ];
 
     final theme = Theme.of(context);
+    final selectedIndex = _selectedSectionIndex.clamp(0, sections.length - 1);
+    final selectedSection = sections[selectedIndex];
 
-    return DefaultTabController(
-      length: sections.length,
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
               ),
-              child: TabBar(
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: theme.colorScheme.primary,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: selectedIndex,
+                  isExpanded: true,
                   borderRadius: BorderRadius.circular(12),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  items: [
+                    for (var i = 0; i < sections.length; i++)
+                      DropdownMenuItem<int>(
+                        value: i,
+                        child: Text(sections[i].tabLabel),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedSectionIndex = value);
+                  },
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
                 ),
-                labelColor: theme.colorScheme.onPrimary,
-                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                labelStyle: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                unselectedLabelStyle: theme.textTheme.titleMedium,
-                tabs: [
-                  for (final section in sections) Tab(text: section.tabLabel),
-                ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: TabBarView(
-              children: [
-                for (final section in sections)
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(bottom: 24),
-                    child: _MetroSection(section: section),
-                  ),
-              ],
-            ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+            ).copyWith(bottom: 24),
+            child: _MetroSection(section: selectedSection),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   _ReportStats _statsFor(List<Trip> trips, Duration range) {
     final now = DateTime.now();
-    final scoped = trips.where((t) => t.start.isAfter(now.subtract(range))).toList();
+    final scoped = trips
+        .where((t) => t.start.isAfter(now.subtract(range)))
+        .toList();
     final data = scoped.isEmpty ? trips : scoped;
     return _ReportStats.fromTrips(data);
   }
@@ -116,7 +134,8 @@ class _MetroSection extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final availableWidth = constraints.hasBoundedWidth && !constraints.biggest.isInfinite
+        final availableWidth =
+            constraints.hasBoundedWidth && !constraints.biggest.isInfinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width - 32;
 
@@ -130,7 +149,8 @@ class _MetroSection extends StatelessWidget {
 
         final rectangleMetrics = metrics.take(4).toList();
         final remaining = metrics.skip(4).toList();
-        Color colorFor(int index) => _metroTileColors[index % _metroTileColors.length];
+        Color colorFor(int index) =>
+            _metroTileColors[index % _metroTileColors.length];
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,10 +180,7 @@ class _MetroSection extends StatelessWidget {
               ),
               itemBuilder: (context, index) {
                 final metric = rectangleMetrics[index];
-                return _MetroTile(
-                  data: metric,
-                  color: colorFor(index),
-                );
+                return _MetroTile(data: metric, color: colorFor(index));
               },
             ),
             if (remaining.isNotEmpty) const SizedBox(height: 16),
@@ -203,16 +220,16 @@ class _MetroColumnLayout extends StatelessWidget {
         Text(
           section.title,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.6,
-              ),
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.6,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           section.subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 16),
         for (var i = 0; i < metrics.length; i++) ...[
@@ -314,7 +331,11 @@ class _TileMetric {
   final String value;
   final String helper;
 
-  const _TileMetric({required this.label, required this.value, required this.helper});
+  const _TileMetric({
+    required this.label,
+    required this.value,
+    required this.helper,
+  });
 }
 
 List<_TileMetric> _metricsFor(_ReportStats stats) {
@@ -341,7 +362,8 @@ List<_TileMetric> _metricsFor(_ReportStats stats) {
     ),
     _TileMetric(
       label: 'Carbon Reduction',
-      value: '${stats.carbonReductionKg > 0 ? '↓' : '↑'} ${stats.carbonReductionKg.abs().clamp(0, double.infinity).toStringAsFixed(1)} kg',
+      value:
+          '${stats.carbonReductionKg > 0 ? '↓' : '↑'} ${stats.carbonReductionKg.abs().clamp(0, double.infinity).toStringAsFixed(1)} kg',
       helper: 'vs baseline emissions',
     ),
   ];
@@ -387,7 +409,8 @@ class _ReportStats {
     }
 
     double average(num Function(Trip) pick) {
-      return trips.map((t) => pick(t).toDouble()).reduce((a, b) => a + b) / trips.length;
+      return trips.map((t) => pick(t).toDouble()).reduce((a, b) => a + b) /
+          trips.length;
     }
 
     const double baselineKgPerKm = 0.24;

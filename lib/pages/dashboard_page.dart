@@ -7,10 +7,11 @@ import '../theme/chart_palette.dart';
 import '../theme/theme_controller.dart';
 import '../models/trip.dart';
 import 'fleet_management_page.dart';
+import 'profit_details_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback? onNavigateToAlerts;
-  
+
   const DashboardPage({super.key, this.onNavigateToAlerts});
 
   @override
@@ -30,13 +31,14 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   bool _isTrendPositive(String trend, bool lowerIsBetter) {
-    return true;
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+    final trimmed = trend.trim();
+    final isNegative = trimmed.startsWith('-');
+    final isPositive = trimmed.startsWith('+');
+    if (isNegative == isPositive) {
+      // If the trend string lacks a sign, assume positive movement favors higher values.
+      return !lowerIsBetter;
+    }
+    return lowerIsBetter ? isNegative : isPositive;
   }
 
   void _toggleVehicleVisibility(int index, int totalVehicles) {
@@ -56,7 +58,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _showCustomToast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).clearSnackBars(); // Clear any existing snackbars
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -69,14 +71,8 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         backgroundColor: Colors.grey[800],
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        margin: const EdgeInsets.only(
-          bottom: 100,
-          left: 16,
-          right: 16,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -88,7 +84,9 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
             padding: const EdgeInsets.all(24),
@@ -103,17 +101,21 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF9800).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFFFF9800,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.directions_car, color: Color(0xFFFF9800)),
+                          child: const Icon(
+                            Icons.directions_car,
+                            color: Color(0xFFFF9800),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           'Vehicle Status',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -125,10 +127,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '${vehicles.where((v) => v.status == 'moving').length} Active / ${vehicles.length} Total',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  "${vehicles.where((v) => v.status == 'moving').length} Active / ${vehicles.length} Total",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -136,16 +138,25 @@ class _DashboardPageState extends State<DashboardPage> {
                   decoration: BoxDecoration(
                     color: Colors.blue.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: Colors.blue.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Colors.blue[700],
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'View real-time status of all vehicles in your fleet. Green indicates active/moving, orange for idle, and red for stopped.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                          ),
                         ),
                       ),
                     ],
@@ -164,9 +175,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: isOnline 
-                              ? Colors.green.withValues(alpha: 0.1)
-                              : Colors.grey.withValues(alpha: 0.1),
+                            color: isOnline
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -180,11 +191,14 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         subtitle: Text('Driver: ${vehicle.driver}'),
                         trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: isOnline 
-                              ? Colors.green.withValues(alpha: 0.1) 
-                              : vehicle.status == 'idle' 
+                            color: isOnline
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : vehicle.status == 'idle'
                                 ? Colors.orange.withValues(alpha: 0.1)
                                 : Colors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -196,9 +210,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                 width: 8,
                                 height: 8,
                                 decoration: BoxDecoration(
-                                  color: isOnline 
-                                    ? Colors.green 
-                                    : vehicle.status == 'idle'
+                                  color: isOnline
+                                      ? Colors.green
+                                      : vehicle.status == 'idle'
                                       ? Colors.orange
                                       : Colors.red,
                                   shape: BoxShape.circle,
@@ -208,9 +222,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               Text(
                                 vehicle.status.toUpperCase(),
                                 style: TextStyle(
-                                  color: isOnline 
-                                    ? Colors.green 
-                                    : vehicle.status == 'idle'
+                                  color: isOnline
+                                      ? Colors.green
+                                      : vehicle.status == 'idle'
                                       ? Colors.orange
                                       : Colors.red,
                                   fontWeight: FontWeight.w600,
@@ -238,7 +252,9 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
             padding: const EdgeInsets.all(24),
@@ -253,17 +269,21 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2196F3).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF2196F3,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.schedule, color: Color(0xFF2196F3)),
+                          child: const Icon(
+                            Icons.schedule,
+                            color: Color(0xFF2196F3),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           'Delivery Times',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -276,9 +296,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 16),
                 Text(
                   'Recent trip delivery times',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -286,16 +306,25 @@ class _DashboardPageState extends State<DashboardPage> {
                   decoration: BoxDecoration(
                     color: Colors.blue.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: Colors.blue.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Colors.blue[700],
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Track delivery times for each trip. Faster deliveries improve customer satisfaction and allow more trips per day.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                          ),
                         ),
                       ),
                     ],
@@ -308,13 +337,17 @@ class _DashboardPageState extends State<DashboardPage> {
                     separatorBuilder: (_, __) => const Divider(),
                     itemBuilder: (context, index) {
                       final trip = trips[index];
-                      final duration = trip.end.difference(trip.start).inMinutes;
+                      final duration = trip.end
+                          .difference(trip.start)
+                          .inMinutes;
                       return ListTile(
                         leading: Container(
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2196F3).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF2196F3,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
@@ -326,7 +359,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           trip.id,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        subtitle: Text('${trip.distanceKm.toStringAsFixed(1)} km'),
+                        subtitle: Text(
+                          '${trip.distanceKm.toStringAsFixed(1)} km',
+                        ),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -360,12 +395,18 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // Show Fuel Efficiency Details Dialog
-  void _showFuelEfficiencyDetails(BuildContext context, List vehicles, List trips) {
+  void _showFuelEfficiencyDetails(
+    BuildContext context,
+    List vehicles,
+    List trips,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
             padding: const EdgeInsets.all(24),
@@ -380,17 +421,21 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF00BCD4).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF00BCD4,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.local_gas_station, color: Color(0xFF00BCD4)),
+                          child: const Icon(
+                            Icons.local_gas_station,
+                            color: Color(0xFF00BCD4),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           'Fuel Efficiency',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -403,9 +448,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 16),
                 Text(
                   'Fuel efficiency by trip',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -413,16 +458,25 @@ class _DashboardPageState extends State<DashboardPage> {
                   decoration: BoxDecoration(
                     color: Colors.cyan.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.cyan.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: Colors.cyan.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.cyan[700]),
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Colors.cyan[700],
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Monitor fuel consumption efficiency (km/L) for each trip. Green indicates good efficiency (>8 km/L), orange needs attention.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                          ),
                         ),
                       ),
                     ],
@@ -456,7 +510,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           trip.id,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        subtitle: Text('${trip.distanceKm.toStringAsFixed(1)} km / ${trip.fuelUsedL.toStringAsFixed(1)} L'),
+                        subtitle: Text(
+                          '${trip.distanceKm.toStringAsFixed(1)} km / ${trip.fuelUsedL.toStringAsFixed(1)} L',
+                        ),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -466,7 +522,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
-                                color: isEfficient ? Colors.green : Colors.orange,
+                                color: isEfficient
+                                    ? Colors.green
+                                    : Colors.orange,
                               ),
                             ),
                             Text(
@@ -491,144 +549,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // Show Profit Details Dialog
-  void _showProfitDetails(BuildContext context, List trips) {
-    final totalProfit = trips.map((t) => t.profit).fold<double>(0, (a, b) => a + b);
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.trending_up, color: Color(0xFF4CAF50)),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Profit Details',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Total Profit',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        '\$${totalProfit.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF4CAF50),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Profit by trip',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.green[700]),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Track profit for each trip. High-profit trips (>250) are marked with a star. Focus on optimizing routes to maximize profits.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: trips.length,
-                    separatorBuilder: (_, __) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final trip = trips[index];
-                      final isHighProfit = trip.profit > 250;
-                      return ListTile(
-                        leading: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: isHighProfit
-                              ? Colors.green.withValues(alpha: 0.1)
-                              : Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            isHighProfit ? Icons.star : Icons.delivery_dining,
-                            color: isHighProfit ? Colors.green : Colors.blue,
-                          ),
-                        ),
-                        title: Text(
-                          trip.id,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: Text('${trip.distanceKm.toStringAsFixed(1)} km'),
-                        trailing: Text(
-                          '\$${trip.profit.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: isHighProfit ? Colors.green : Colors.grey[700],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  void _showProfitDetails(BuildContext context, List<Trip> trips) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProfitDetailsPage(trips: List<Trip>.from(trips)),
+      ),
     );
   }
 
@@ -644,19 +569,27 @@ class _DashboardPageState extends State<DashboardPage> {
         controller.dashboardChartLimit,
         controller.chartTripsTarget,
         controller.chartProfitTarget,
+        controller.normalTripSuccessPercent,
       ]),
       builder: (context, _) {
         final int dayWindow = controller.dashboardChartLimit.value.clamp(3, 30);
         final double tripsTarget = controller.chartTripsTarget.value.toDouble();
-        final double profitTarget = controller.chartProfitTarget.value.toDouble();
+        final double profitTarget = controller.chartProfitTarget.value
+            .toDouble();
+        final int normalTripPercent = controller.normalTripSuccessPercent.value;
         final active = vehicles.where((v) => v.status == 'moving').length;
-        final avgTime = (trips
-                    .map((t) => t.end.difference(t.start).inMinutes)
-                    .fold<int>(0, (a, b) => a + b) /
-                trips.length)
-            .round();
-        final avgFuelEff = (trips.map((t) => t.distanceKm / t.fuelUsedL).fold<double>(0, (a, b) => a + b) / trips.length)
-            .toStringAsFixed(1);
+        final avgTime =
+            (trips
+                        .map((t) => t.end.difference(t.start).inMinutes)
+                        .fold<int>(0, (a, b) => a + b) /
+                    trips.length)
+                .round();
+        final avgFuelEff =
+            (trips
+                        .map((t) => t.distanceKm / t.fuelUsedL)
+                        .fold<double>(0, (a, b) => a + b) /
+                    trips.length)
+                .toStringAsFixed(1);
         final profitToday = trips
             .take(3)
             .map((t) => t.profit)
@@ -690,288 +623,386 @@ class _DashboardPageState extends State<DashboardPage> {
                         subtitle: 'Out of ${vehicles.length} total',
                         onTap: () => _showVehicleDetails(context, vehicles),
                       ),
-                  MetricCard(
-                    title: 'Average Delivery Time',
-                    value: avgTime.toString(),
-                    icon: Icons.schedule,
-                    color: const Color(0xFF2196F3), // Blue
-                    subtitle: 'Minutes avg',
-                    trend: '$timeTrend from last week',
-                    isPositiveTrend: _isTrendPositive(timeTrend, true), // Lower is better
-                    onTap: () => _showDeliveryTimeDetails(context, trips),
-                  ),
-                  MetricCard(
-                    title: 'Fuel Efficiency',
-                    value: avgFuelEff,
-                    icon: Icons.local_gas_station,
-                    color: const Color(0xFF00BCD4), // Cyan
-                    subtitle: 'km/l average',
-                    trend: '$fuelTrend from last week',
-                    isPositiveTrend: _isTrendPositive(fuelTrend, false),
-                    onTap: () => _showFuelEfficiencyDetails(context, vehicles, trips),
-                  ),
-                  MetricCard(
-                    title: 'Profit Today',
-                    value: '\$$profitToday',
-                    icon: Icons.trending_up,
-                    color: const Color(0xFF4CAF50), // Green
-                    subtitle: 'Daily revenue',
-                    trend: '$profitTrend from last week',
-                    isPositiveTrend: _isTrendPositive(profitTrend, false),
-                    onTap: () => _showProfitDetails(context, trips),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _TopVehiclesCard(trips: trips),
-              const SizedBox(height: 20),
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Chart Header with Title
-                      Text(
-                        _getChartTitle(_currentChartIndex),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                      MetricCard(
+                        title: 'Average Delivery Time',
+                        value: avgTime.toString(),
+                        icon: Icons.schedule,
+                        color: const Color(0xFF2196F3), // Blue
+                        subtitle: 'Minutes avg',
+                        trend: '$timeTrend from last week',
+                        isPositiveTrend: _isTrendPositive(
+                          timeTrend,
+                          true,
+                        ), // Lower is better
+                        onTap: () => _showDeliveryTimeDetails(context, trips),
+                      ),
+                      MetricCard(
+                        title: 'Fuel Efficiency',
+                        value: avgFuelEff,
+                        icon: Icons.local_gas_station,
+                        color: const Color(0xFF00BCD4), // Cyan
+                        subtitle: 'km/l average',
+                        trend: '$fuelTrend from last week',
+                        isPositiveTrend: _isTrendPositive(fuelTrend, false),
+                        onTap: () => _showFuelEfficiencyDetails(
+                          context,
+                          vehicles,
+                          trips,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      // Swipe instruction text
-                      Text(
-                        '← Swipe to change chart →',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontStyle: FontStyle.italic,
-                        ),
+                      MetricCard(
+                        title: 'Profit Today',
+                        value: '\$$profitToday',
+                        icon: Icons.trending_up,
+                        color: const Color(0xFF4CAF50), // Green
+                        subtitle: 'Daily revenue',
+                        trend: '$profitTrend from last week',
+                        isPositiveTrend: _isTrendPositive(profitTrend, false),
+                        onTap: () => _showProfitDetails(context, trips),
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 300,
-                        child: PageView(
-                          controller: _pageController,
-                          onPageChanged: (index) {
-                            setState(() => _currentChartIndex = index);
-                          },
-                          clipBehavior: Clip.none,
-                          padEnds: true,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 16),
-                              child: _buildDotChart(context, vehicles, dayWindow),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _TopVehiclesCard(
+                    trips: trips,
+                    normalTripPercent: normalTripPercent,
+                    onThresholdChanged: controller.setNormalTripSuccessPercent,
+                  ),
+                  const SizedBox(height: 20),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Chart Header with Title
+                          Text(
+                            _getChartTitle(_currentChartIndex),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          // Swipe instruction text
+                          Text(
+                            '← Swipe to change chart →',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 300,
+                            child: PageView(
+                              controller: _pageController,
+                              onPageChanged: (index) {
+                                setState(() => _currentChartIndex = index);
+                              },
+                              clipBehavior: Clip.none,
+                              padEnds: true,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    right: 8,
+                                    top: 8,
+                                    bottom: 16,
+                                  ),
+                                  child: _buildDotChart(
+                                    context,
+                                    vehicles,
+                                    dayWindow,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    right: 8,
+                                    top: 8,
+                                    bottom: 16,
+                                  ),
+                                  child: _buildLineChart(
+                                    context,
+                                    vehicles,
+                                    dayWindow,
+                                    tripsTarget,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    right: 8,
+                                    top: 8,
+                                    bottom: 16,
+                                  ),
+                                  child: _buildFuelBarChart(context, vehicles),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    right: 8,
+                                    top: 8,
+                                    bottom: 16,
+                                  ),
+                                  child: _buildProfitBarChart(
+                                    context,
+                                    vehicles,
+                                    profitTarget,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 16),
-                              child: _buildLineChart(context, vehicles, dayWindow, tripsTarget),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 16),
-                              child: _buildFuelBarChart(context, vehicles),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 16),
-                              child: _buildProfitBarChart(context, vehicles, profitTarget),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Page indicators (dots) - moved to bottom
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                            4,
-                            (index) => Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _currentChartIndex == index
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 12),
+                          // Page indicators (dots) - moved to bottom
+                          Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(
+                                4,
+                                (index) => Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _currentChartIndex == index
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.outline
+                                              .withValues(alpha: 0.3),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 42, // Fixed height for chips
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  for (final entry
+                                      in vehicles.asMap().entries) ...[
+                                    GestureDetector(
+                                      onTap: () => _toggleVehicleVisibility(
+                                        entry.key,
+                                        vehicles.length,
+                                      ),
+                                      child: _LegendChip(
+                                        label: entry.value.id,
+                                        color: seriesColors(
+                                          context,
+                                          vehicles.length,
+                                        )[entry.key],
+                                        isHidden: _hiddenVehicleIndices
+                                            .contains(entry.key),
+                                      ),
+                                    ),
+                                    if (entry.key < vehicles.length - 1)
+                                      const SizedBox(width: 12),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 42, // Fixed height for chips
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              for (final entry in vehicles.asMap().entries) ...[
-                                GestureDetector(
-                                  onTap: () => _toggleVehicleVisibility(entry.key, vehicles.length),
-                                  child: _LegendChip(
-                                    label: entry.value.id,
-                                    color: seriesColors(context, vehicles.length)[entry.key],
-                                    isHidden: _hiddenVehicleIndices.contains(entry.key),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Builder(
+                    builder: (context) {
+                      final isDark =
+                          Theme.of(context).brightness == Brightness.dark;
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                        color: const Color(
+                          0xFF6366F1,
+                        ).withValues(alpha: isDark ? 0.1 : 0.08),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const FleetManagementPage(),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF6366F1,
+                                    ).withValues(alpha: isDark ? 0.2 : 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.business_center,
+                                    color: isDark
+                                        ? const Color(0xFF818CF8)
+                                        : const Color(0xFF6366F1),
+                                    size: 32,
                                   ),
                                 ),
-                                if (entry.key < vehicles.length - 1)
-                                  const SizedBox(width: 12),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Manage Vehicles & Drivers',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark
+                                                  ? const Color(0xFFCBCBCB)
+                                                  : const Color(0xFF1F2937),
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Add & manage vehicles and drivers',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: isDark
+                                                  ? Colors.grey[600]
+                                                  : Colors.grey[700],
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: isDark
+                                      ? const Color(0xFFCFD0E3)
+                                      : const Color(0xFF6B7280),
+                                  size: 20,
+                                ),
                               ],
-                            ],
+                            ),
                           ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recent alerts',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: widget.onNavigateToAlerts,
+                        icon: Icon(
+                          Icons.arrow_forward,
+                          size: Theme.of(
+                            context,
+                          ).textTheme.labelLarge?.fontSize,
+                        ),
+                        label: Text(
+                          'View All',
+                          style: Theme.of(context).textTheme.labelLarge,
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Builder(
-                builder: (context) {
-                  final isDark = Theme.of(context).brightness == Brightness.dark;
-                  return Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                    color: const Color(0xFF6366F1).withValues(alpha: isDark ? 0.1 : 0.08),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const FleetManagementPage(),
+                  const SizedBox(height: 12),
+                  ...List.generate(alerts.take(3).length, (i) {
+                    final a = alerts[i];
+                    final color = a.type == 'speeding'
+                        ? Colors.red
+                        : a.type == 'idle'
+                        ? Colors.orange
+                        : Colors.blue;
+                    final isLight =
+                        Theme.of(context).brightness == Brightness.light;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Card(
+                        elevation: 2,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF6366F1).withValues(alpha: isDark ? 0.2 : 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                Icons.business_center,
-                                color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
-                                size: 32,
-                              ),
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isLight
+                                  ? Colors.grey.shade100
+                                  : color.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Manage Vehicles & Drivers',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark ? const Color(0xFFCBCBCB) : const Color(0xFF1F2937),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Add & manage vehicles and drivers',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: isDark ? Colors.grey[600] : Colors.grey[700],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            child: Icon(
+                              a.type == 'speeding'
+                                  ? Icons.speed
+                                  : a.type == 'idle'
+                                  ? Icons.pause_circle
+                                  : Icons.build,
+                              color: color,
+                              size: Theme.of(context).iconTheme.size! * 1.3,
                             ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              color: isDark ? const Color(0xFFCFD0E3) : const Color(0xFF6B7280),
-                              size: 20,
+                          ),
+                          title: Text(
+                            a.type.toUpperCase(),
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  color: color,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              a.message,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            size: Theme.of(context).iconTheme.size,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Recent alerts',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  TextButton.icon(
-                    onPressed: widget.onNavigateToAlerts,
-                    icon: Icon(Icons.arrow_forward, size: Theme.of(context).textTheme.labelLarge?.fontSize),
-                    label: Text('View All', style: Theme.of(context).textTheme.labelLarge),
-                  ),
+                    );
+                  }),
                 ],
               ),
-              const SizedBox(height: 12),
-              ...List.generate(
-                alerts.take(3).length,
-                (i) {
-                  final a = alerts[i];
-                  final color = a.type == 'speeding'
-                      ? Colors.red
-                      : a.type == 'idle'
-                          ? Colors.orange
-                          : Colors.blue;
-                  final isLight = Theme.of(context).brightness == Brightness.light;
-                  
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: Card(
-                      elevation: 2,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        leading: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isLight ? Colors.grey.shade100 : color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            a.type == 'speeding'
-                                ? Icons.speed
-                                : a.type == 'idle'
-                                    ? Icons.pause_circle
-                                    : Icons.build,
-                            color: color,
-                            size: Theme.of(context).iconTheme.size! * 1.3,
-                          ),
-                        ),
-                        title: Text(
-                          a.type.toUpperCase(),
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Text(
-                            a.message,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        trailing: Icon(
-                          Icons.chevron_right,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          size: Theme.of(context).iconTheme.size,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
             );
           },
         );
@@ -1000,20 +1031,23 @@ class _DashboardPageState extends State<DashboardPage> {
     final allSpots = <FlSpot>[];
     for (final entry in vehicles.asMap().entries) {
       if (!_hiddenVehicleIndices.contains(entry.key)) {
-        for (int i = 0; i < dayWindow; i++){
-          allSpots.add(FlSpot(
-            i.toDouble(),
-            (i * 1.0 + (entry.key + 1) * 2).toDouble(),
-          ));
+        for (int i = 0; i < dayWindow; i++) {
+          allSpots.add(
+            FlSpot(i.toDouble(), (i * 1.0 + (entry.key + 1) * 2).toDouble()),
+          );
         }
       }
     }
-    
+
     // Calculate min/max from actual data
-    final minY = allSpots.isEmpty ? 0 : allSpots.map((s) => s.y).reduce((a, b) => a < b ? a : b);
-    final maxY = allSpots.isEmpty ? 20 : allSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    final minY = allSpots.isEmpty
+        ? 0
+        : allSpots.map((s) => s.y).reduce((a, b) => a < b ? a : b);
+    final maxY = allSpots.isEmpty
+        ? 20
+        : allSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
     final padding = (maxY - minY) * 0.1; // 10% padding
-    
+
     return LineChart(
       LineChartData(
         minX: 0,
@@ -1024,7 +1058,7 @@ class _DashboardPageState extends State<DashboardPage> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-                interval: dayWindow <= 12 ? 2 : 4,
+              interval: dayWindow <= 12 ? 2 : 4,
               getTitlesWidget: (v, m) => Text(
                 'D${v.toInt()}',
                 style: Theme.of(context).textTheme.bodySmall,
@@ -1042,8 +1076,12 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
           ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         gridData: const FlGridData(show: true, drawVerticalLine: true),
         borderData: FlBorderData(show: false),
@@ -1078,7 +1116,8 @@ class _DashboardPageState extends State<DashboardPage> {
           touchTooltipData: LineTouchTooltipData(
             fitInsideHorizontally: true,
             fitInsideVertically: true,
-            getTooltipColor: (touchedSpot) => Theme.of(context).colorScheme.surface,
+            getTooltipColor: (touchedSpot) =>
+                Theme.of(context).colorScheme.surface,
             getTooltipItems: (items) => [
               for (final it in items)
                 LineTooltipItem(
@@ -1098,21 +1137,32 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // Chart 2: Average Speed - Line Chart
-  Widget _buildLineChart(BuildContext context, List vehicles, int dayWindow, double tripsTarget) {
+  Widget _buildLineChart(
+    BuildContext context,
+    List vehicles,
+    int dayWindow,
+    double tripsTarget,
+  ) {
     final allSpots = <FlSpot>[];
     for (final entry in vehicles.asMap().entries) {
       if (!_hiddenVehicleIndices.contains(entry.key)) {
         for (int i = 0; i < dayWindow; i++) {
-          allSpots.add(FlSpot(
-            i.toDouble(),
-            (i * 1.0 + (entry.key + 1) * 2 + 20).toDouble(),
-          ));
+          allSpots.add(
+            FlSpot(
+              i.toDouble(),
+              (i * 1.0 + (entry.key + 1) * 2 + 20).toDouble(),
+            ),
+          );
         }
       }
     }
 
-    final minY = allSpots.isEmpty ? 20 : allSpots.map((s) => s.y).reduce((a, b) => a < b ? a : b);
-    final maxY = allSpots.isEmpty ? 38 : allSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    final minY = allSpots.isEmpty
+        ? 20
+        : allSpots.map((s) => s.y).reduce((a, b) => a < b ? a : b);
+    final maxY = allSpots.isEmpty
+        ? 38
+        : allSpots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
     final padding = (maxY - minY) * 0.05;
 
     return LineChart(
@@ -1143,8 +1193,12 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
           ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         gridData: const FlGridData(show: true, drawVerticalLine: true),
         borderData: FlBorderData(show: false),
@@ -1200,7 +1254,8 @@ class _DashboardPageState extends State<DashboardPage> {
           touchTooltipData: LineTouchTooltipData(
             fitInsideHorizontally: true,
             fitInsideVertically: true,
-            getTooltipColor: (touchedSpot) => Theme.of(context).colorScheme.surface,
+            getTooltipColor: (touchedSpot) =>
+                Theme.of(context).colorScheme.surface,
             getTooltipItems: (items) => [
               for (final it in items)
                 LineTooltipItem(
@@ -1228,11 +1283,13 @@ class _DashboardPageState extends State<DashboardPage> {
         allValues.add((entry.key + 1) * 15.0 + 20);
       }
     }
-    
+
     // Calculate min/max from actual data
-    final maxY = allValues.isEmpty ? 80 : allValues.reduce((a, b) => a > b ? a : b);
+    final maxY = allValues.isEmpty
+        ? 80
+        : allValues.reduce((a, b) => a > b ? a : b);
     final padding = maxY * 0.15; // 15% padding for bar charts
-    
+
     return BarChart(
       BarChartData(
         minY: 0,
@@ -1242,7 +1299,8 @@ class _DashboardPageState extends State<DashboardPage> {
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (v, m) {
-                if (v.toInt() >= vehicles.length) return const SizedBox.shrink();
+                if (v.toInt() >= vehicles.length)
+                  return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
@@ -1264,8 +1322,12 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
           ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         gridData: const FlGridData(show: true, drawVerticalLine: true),
         borderData: FlBorderData(show: false),
@@ -1279,7 +1341,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     toY: (entry.key + 1) * 15.0 + 20,
                     color: seriesColors(context, vehicles.length)[entry.key],
                     width: 20,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(4),
+                    ),
                   ),
                 ],
               ),
@@ -1306,7 +1370,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // Chart 4: Daily Profit - Bar Chart
-  Widget _buildProfitBarChart(BuildContext context, List vehicles, double profitTarget) {
+  Widget _buildProfitBarChart(
+    BuildContext context,
+    List vehicles,
+    double profitTarget,
+  ) {
     // Calculate all bar values for visible vehicles
     final allValues = <double>[];
     for (final entry in vehicles.asMap().entries) {
@@ -1314,11 +1382,13 @@ class _DashboardPageState extends State<DashboardPage> {
         allValues.add((entry.key + 1) * 150.0 + 300);
       }
     }
-    
+
     // Calculate min/max from actual data
-    final maxY = allValues.isEmpty ? 1000 : allValues.reduce((a, b) => a > b ? a : b);
+    final maxY = allValues.isEmpty
+        ? 1000
+        : allValues.reduce((a, b) => a > b ? a : b);
     final padding = maxY * 0.15; // 15% padding for bar charts
-    
+
     return BarChart(
       BarChartData(
         minY: 0,
@@ -1328,7 +1398,8 @@ class _DashboardPageState extends State<DashboardPage> {
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (v, m) {
-                if (v.toInt() >= vehicles.length) return const SizedBox.shrink();
+                if (v.toInt() >= vehicles.length)
+                  return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
@@ -1350,8 +1421,12 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
           ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         gridData: const FlGridData(show: true, drawVerticalLine: true),
         borderData: FlBorderData(show: false),
@@ -1386,7 +1461,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     toY: (entry.key + 1) * 150.0 + 300,
                     color: seriesColors(context, vehicles.length)[entry.key],
                     width: 20,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(4),
+                    ),
                   ),
                 ],
               ),
@@ -1417,23 +1494,21 @@ class _LegendChip extends StatelessWidget {
   final String label;
   final Color color;
   final bool isHidden;
-  
+
   const _LegendChip({
-    required this.label, 
-    required this.color, 
+    required this.label,
+    required this.color,
     this.isHidden = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isGrandmaMode = ThemeController.instance.grandmaMode.value;
-    
+
     return Chip(
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       avatar: CircleAvatar(
-        backgroundColor: isHidden 
-            ? Colors.grey.withValues(alpha: 0.3) 
-            : color,
+        backgroundColor: isHidden ? Colors.grey.withValues(alpha: 0.3) : color,
         radius: isGrandmaMode ? 8 : 6,
       ),
       label: Text(
@@ -1444,22 +1519,24 @@ class _LegendChip extends StatelessWidget {
           fontWeight: isGrandmaMode ? FontWeight.bold : FontWeight.normal,
         ),
       ),
-      backgroundColor: isHidden 
-          ? Colors.grey.withValues(alpha: 0.1) 
-          : (isGrandmaMode 
-              ? color.withValues(alpha: 0.15)
-              : null),
-      side: isGrandmaMode 
-          ? BorderSide(color: color, width: 2)
-          : null,
+      backgroundColor: isHidden
+          ? Colors.grey.withValues(alpha: 0.1)
+          : (isGrandmaMode ? color.withValues(alpha: 0.15) : null),
+      side: isGrandmaMode ? BorderSide(color: color, width: 2) : null,
     );
   }
 }
 
 class _TopVehiclesCard extends StatelessWidget {
   final List<Trip> trips;
+  final int normalTripPercent;
+  final ValueChanged<int>? onThresholdChanged;
 
-  const _TopVehiclesCard({required this.trips});
+  const _TopVehiclesCard({
+    required this.trips,
+    required this.normalTripPercent,
+    this.onThresholdChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1481,7 +1558,9 @@ class _TopVehiclesCard extends StatelessWidget {
           children: [
             Text(
               'Top Delivering Vehicles',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -1490,9 +1569,46 @@ class _TopVehiclesCard extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            const SizedBox(height: 12),
+            if (onThresholdChanged != null) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Normal success threshold',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Text('$normalTripPercent%', style: theme.textTheme.bodySmall),
+                ],
+              ),
+              Slider(
+                value: normalTripPercent.toDouble(),
+                min: 30,
+                max: 100,
+                divisions: 14,
+                label: '$normalTripPercent%',
+                onChanged: (value) =>
+                    onThresholdChanged!(value.round().clamp(30, 100)),
+              ),
+            ] else
+              Text(
+                'Normal success ≥ $normalTripPercent%',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             const SizedBox(height: 16),
             for (int i = 0; i < topThree.length; i++) ...[
-              _TopVehicleRow(trip: topThree[i], rank: i + 1),
+              _TopVehicleRow(
+                trip: topThree[i],
+                rank: i + 1,
+                normalTripPercent: normalTripPercent,
+              ),
               if (i < topThree.length - 1) const SizedBox(height: 16),
             ],
           ],
@@ -1505,8 +1621,13 @@ class _TopVehiclesCard extends StatelessWidget {
 class _TopVehicleRow extends StatelessWidget {
   final Trip trip;
   final int rank;
+  final int normalTripPercent;
 
-  const _TopVehicleRow({required this.trip, required this.rank});
+  const _TopVehicleRow({
+    required this.trip,
+    required this.rank,
+    required this.normalTripPercent,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1514,7 +1635,8 @@ class _TopVehicleRow extends StatelessWidget {
     final scheme = theme.colorScheme;
     final double successRatio = trip.all == 0 ? 0 : trip.curr / trip.all;
     final double progress = successRatio.clamp(0, 1);
-    final bool isCritical = successRatio <= 0.25;
+    final bool isCritical =
+        (successRatio * 100).clamp(0, 100).toDouble() < normalTripPercent;
     final Color progressColor = isCritical ? scheme.error : scheme.primary;
 
     return Column(
@@ -1545,7 +1667,9 @@ class _TopVehicleRow extends StatelessWidget {
                 children: [
                   Text(
                     trip.id,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -1564,15 +1688,13 @@ class _TopVehicleRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isCritical)
-                      Icon(
-                        Icons.error_outline,
-                        color: scheme.error,
-                        size: 16,
-                      ),
+                      Icon(Icons.error_outline, color: scheme.error, size: 16),
                     if (isCritical) const SizedBox(width: 4),
                     Text(
                       '${(successRatio * 100).clamp(0, 100).toStringAsFixed(0)}%',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -1582,6 +1704,14 @@ class _TopVehicleRow extends StatelessWidget {
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
+                if (isCritical)
+                  Text(
+                    'Below $normalTripPercent% target → profit risk',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
               ],
             ),
           ],
@@ -1592,7 +1722,9 @@ class _TopVehicleRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 6,
-            backgroundColor: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+            backgroundColor: scheme.surfaceContainerHighest.withValues(
+              alpha: 0.6,
+            ),
             color: progressColor,
           ),
         ),
