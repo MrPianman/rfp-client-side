@@ -141,6 +141,30 @@ class SettingsPage extends StatelessWidget {
                     );
                   },
                 ),
+                const SizedBox(height: 8),
+                ValueListenableBuilder<int>(
+                  valueListenable: ThemeController.instance.normalTripSuccessPercent,
+                  builder: (context, percent, _) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Normal Success Threshold'),
+                          subtitle: Text('Flag deliveries below $percent% success rate'),
+                        ),
+                        Slider(
+                          min: 30,
+                          max: 100,
+                          divisions: 14,
+                          label: '$percent%',
+                          value: percent.toDouble(),
+                          onChanged: (value) => ThemeController.instance.setNormalTripSuccessPercent(value.round().clamp(30, 100)),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),

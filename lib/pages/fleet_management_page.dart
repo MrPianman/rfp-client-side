@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../config/app_config.dart';
 import '../data/mock_data.dart';
 import '../models/models.dart';
+import '../repositories/vehicle_repository.dart';
 import 'market_list_page.dart';
 
 class FleetManagementPage extends StatefulWidget {
@@ -14,9 +16,9 @@ class FleetManagementPage extends StatefulWidget {
 
 class _FleetManagementPageState extends State<FleetManagementPage>
     with SingleTickerProviderStateMixin {
-  static final Uri _vehicleGraphQlEndpoint = Uri.parse(
-    'https://example.com/graphql', // Replace with your backend GraphQL endpoint.
-  );
+  static final Uri _vehicleGraphQlEndpoint =
+      AppConfig.defaultConfig.graphqlEndpoint;
+  static const VehicleRepository _repository = VehicleRepository();
   late TabController _tabController;
   late List<Vehicle> _vehicles;
   bool _loadingVehicles = false;
@@ -37,12 +39,11 @@ class _FleetManagementPageState extends State<FleetManagementPage>
     });
 
     try {
-      final fetched = await fetchVehiclesFromServer(
-        endpoint: _vehicleGraphQlEndpoint,
-      );
+      final result = await _repository.fetchVehicles(_vehicleGraphQlEndpoint);
       if (!mounted) return;
       setState(() {
-        _vehicles = fetched;
+        _vehicles = result.vehicles;
+        _vehicleLoadError = result.error;
       });
     } catch (error) {
       if (!mounted) return;
@@ -50,10 +51,11 @@ class _FleetManagementPageState extends State<FleetManagementPage>
         _vehicleLoadError = error.toString();
       });
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _loadingVehicles = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loadingVehicles = false;
+        });
+      }
     }
   }
 
@@ -172,41 +174,43 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              Text("Plate: ${vehicle.plate}"),
+                              Text('Plate: ${vehicle.plate}'),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _statusColor(vehicle.status)
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: _statusColor(vehicle.status),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(vehicle.status.toUpperCase()),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _statusColor(
-                          vehicle.status,
-                        ).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.ev_station, size: 16),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${vehicle.fuelEfficiency.toStringAsFixed(1)} km/l',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: SizedBox(
-                        height: 220,
+                        height: 180,
                         child: _FleetMapView(
                           vehicles: [vehicle],
                           focusVehicleId: vehicle.id,
@@ -214,7 +218,7 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     _EditableFleetField(
                       label: 'Driver',
                       controller: driverController,
@@ -222,7 +226,7 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                     ),
                     const SizedBox(height: 12),
                     _EditableFleetField(
-                      label: 'Note',
+                      label: 'Notes',
                       controller: noteController,
                       readOnly: !isEditing,
                       minLines: 3,

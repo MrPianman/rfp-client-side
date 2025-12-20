@@ -187,7 +187,7 @@ Future<Vehicle?> fetchVehicleFromGraphQl({
       return null;
     }
 
-    double _asDouble(dynamic source) {
+    double asDouble(dynamic source) {
       if (source is num) {
         return source.toDouble();
       }
@@ -200,10 +200,10 @@ Future<Vehicle?> fetchVehicleFromGraphQl({
       plate: vehicleData['plate'] as String,
       note: (vehicleData['note'] as String?) ?? '',
       status: (vehicleData['status'] as String?) ?? 'offline',
-      lat: _asDouble(vehicleData['lat']),
-      lng: _asDouble(vehicleData['lng']),
-      speedKph: _asDouble(vehicleData['speedKph']),
-      fuelEfficiency: _asDouble(vehicleData['fuelEfficiency']),
+      lat: asDouble(vehicleData['lat']),
+      lng: asDouble(vehicleData['lng']),
+      speedKph: asDouble(vehicleData['speedKph']),
+      fuelEfficiency: asDouble(vehicleData['fuelEfficiency']),
     );
   } finally {
     if (client == null) {
