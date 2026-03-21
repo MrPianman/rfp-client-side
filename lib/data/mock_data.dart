@@ -13,7 +13,7 @@ final List<Map<String, Object?>> _vehicleSeedData = [
     'driver': 'Alice',
     'plate': 'ESC 001',
     'note': 'Hello World XD',
-    'expectedMinutes': 65,
+    'expectedMinutes': 60,
     'profit': 617.0,
     'market': [
       {'name': 'Onion', 'received': true},
@@ -27,7 +27,7 @@ final List<Map<String, Object?>> _vehicleSeedData = [
     'driver': 'Bob',
     'plate': 'KOS 001',
     'note': 'Hello World XD',
-    'expectedMinutes': 70,
+    'expectedMinutes': 60,
     'profit': 620.0,
     'market': [
       {'name': 'Carrot', 'received': true},
@@ -41,7 +41,7 @@ final List<Map<String, Object?>> _vehicleSeedData = [
     'driver': 'Charlie',
     'plate': 'ESC 002',
     'note': 'Hello World XD',
-    'expectedMinutes': 66,
+    'expectedMinutes': 60,
     'profit': 613.0,
     'market': [
       {'name': 'Cabbage', 'received': false},
@@ -54,7 +54,7 @@ final List<Map<String, Object?>> _vehicleSeedData = [
     'driver': 'Diana',
     'plate': 'KOS 002',
     'note': 'Hello World XD',
-    'expectedMinutes': 67,
+    'expectedMinutes': 60,
     'profit': 619.0,
     'market': [
       {'name': 'Rice', 'received': true},

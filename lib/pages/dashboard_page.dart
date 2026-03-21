@@ -466,13 +466,12 @@ class _DashboardPageState extends State<DashboardPage> {
       builder: (context, _) {
         final int normalTripPercent = controller.normalTripSuccessPercent.value;
         final active = vehicles.where((v) => v.status == 'moving').length;
-        // final avgTime =
-        //     (trips
-        //                 .map((t) => t.end.difference(t.start).inMinutes)
-        //                 .fold<int>(0, (a, b) => a + b) /
-        //             trips.length)
-        //         .round();
-        final avgTime = 67;
+        final avgTime =
+            (trips
+                        .map((t) => t.end.difference(t.start).inMinutes)
+                        .fold<int>(0, (a, b) => a + b) /
+                    trips.length)
+                .round();
         final avgFuelEff =
             (trips
                         .map((t) => t.distanceKm / t.fuelUsedL)
