@@ -362,7 +362,6 @@ class _VehiclesTabState extends State<_VehiclesTab> {
                   onPressed: () {
                     if (vehicleIdController.text.isNotEmpty &&
                         driverController.text.isNotEmpty) {
-                      // TODO: Add vehicle to database/state management
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -748,6 +747,8 @@ class _DriversTabState extends State<_DriversTab> {
                               ? const Color(0xFF4CAF50)
                               : vehicle.status == 'idle'
                               ? const Color(0xFFFF9800)
+                              : vehicle.status == 'gone'
+                              ? const Color.fromARGB(255, 164, 164, 164)
                               : const Color(0xFFF44336),
                         ),
                         const SizedBox(width: 12),
@@ -1123,6 +1124,8 @@ Color _statusColor(String status) {
       return const Color(0xFF4CAF50);
     case 'idle':
       return const Color(0xFFFF9800);
+    case 'offline':
+      return const Color.fromARGB(255, 164, 164, 164);
     default:
       return const Color(0xFFF44336);
   }

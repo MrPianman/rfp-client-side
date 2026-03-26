@@ -10,7 +10,7 @@ class AppConfig {
   final Uri authRefresh;
 
   static final AppConfig defaultConfig = AppConfig(
-    graphqlEndpoint: Uri.parse('https://example.com/graphql'),
+    graphqlEndpoint: Uri.parse('https://openhouseesck.online/graphql'),
     authLogin: Uri.parse('https://example.com/auth/login'),
     authRefresh: Uri.parse('https://example.com/auth/refresh'),
   );

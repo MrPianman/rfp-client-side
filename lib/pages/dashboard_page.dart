@@ -3,8 +3,9 @@ import 'dart:math';
 import '../data/mock_data.dart';
 import '../widgets/metric_card.dart';
 import '../theme/theme_controller.dart';
-import '../models/trip.dart';
+import '../models/models.dart';
 import 'profit_details_page.dart';
+import '../config/app_config.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback? onNavigateToAlerts;
@@ -17,6 +18,22 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final Random _random = Random();
+  List<Vehicle> _vehicles = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVehicles();
+  }
+
+  Future<void> _loadVehicles() async {
+    final vehicles = await fetchVehiclesFromServer(endpoint: AppConfig.defaultConfig.graphqlEndpoint);
+    setState(() {
+      _vehicles = vehicles;
+      _isLoading = false;
+    });
+  }
 
   String _generateTrend() {
     final value = _random.nextInt(30) + 1;
@@ -454,7 +471,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final vehicles = mockVehicles();
+    final vehicles = _isLoading ? mockVehicles() : _vehicles;
     final alerts = mockAlerts();
     final trips = mockTrips();
 
