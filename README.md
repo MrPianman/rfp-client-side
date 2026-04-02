@@ -1,6 +1,6 @@
 # OptiRoute
 "OptiRoute" application for project "OptiRoute: A Route Optimization Application for Minimize Fuel Consumption in Ingredient Logistics"
-### Made for ESC17 and SciUS17 
+### Made for ESC17 and SciUS16 
 For educational purpose only
 
 ## Tools:
